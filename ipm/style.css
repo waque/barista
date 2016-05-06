@@ -1,0 +1,233 @@
+html{
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+
+body {
+	-webkit-user-select: none; /* webkit (safari, chrome) browsers */
+    -moz-user-select: none; /* mozilla browsers */
+    -khtml-user-select: none; /* webkit (konqueror) browsers */
+    -ms-user-select: none;
+  background-image: url("background-3.jpg");
+  background-repeat:no-repeat;
+  background-size:cover;
+  border-style: solid;
+  border-radius: 3%;
+  margin : 2%;
+  border-width: 1%;
+  position: relative;
+  min-width: 94%;
+  min-height: 94%;
+  line-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.scrollClass {
+  position: absolute;
+  width: 200px;
+  height: 400px;
+  background: white;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+.scrollElement{
+	position: relative;
+	text-align: center;
+	border-style: solid;
+	border-radius: 3%;
+	margin : 1%;
+	border-width: 1%;
+	font-size="200%";
+}
+
+.scrollClass2 {
+  position: absolute;
+  width: 420px;
+  height: 100px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.scrollClass3 {
+  position: absolute;
+  width: 325px;
+  height: 100px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.horContainer{
+	position: relative;
+	text-align: center;
+	margin : 1%;
+	width:90px;
+	height:80px;
+    float: right;
+}
+
+
+.scrollClass::-webkit-scrollbar {
+    width: 12px;
+}
+
+.scrollClass::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px  rgba(22, 68, 68, 0.35);
+    border-radius: 10px;
+}
+
+.scrollClass::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 10px rgba(48, 106, 161, 0.88);
+}
+#container {
+  position: absolute;
+  bottom: 157px;
+  right: 50px;
+  width: 250px;
+  height: 50px;
+
+}
+/*#Mesa {
+  position: absolute;
+  top: 45%;
+  left: 45%;
+  border-style: solid;
+  border-radius: 50%;
+  border-width: 3px;
+  z-index: 2;
+}*/
+#inputOferecer {
+  clear:both;
+  position:absolute;
+  top: 38%;
+  left: 45%;
+   visibility: hidden;
+  border-style: solid;
+  border-width:1px;
+    z-index: 2;
+}
+
+#img1 {
+  position: absolute;
+  max-width: 100%;
+  max-height: 100%;
+  bottom: 10px;
+  right: 10px;
+  border-radius: 3%;
+}
+
+#time1 {
+  position: absolute;
+  height: 20px;
+  width: 200px;
+  bottom: 10px;
+  left: 10px;
+  background-color: #fff;
+  border-style: solid;
+  border-radius: 5%;
+  border-width: 1%;
+   -webkit-transform: rotate(180deg); /* Chrome, Safari, Opera */
+}
+
+#time2 {
+  position: absolute;
+  height: 20px;
+  width: 200px;
+  top: 10px;
+  right: 10px;
+  background-color: #fff;
+  border-style: solid;
+  border-radius: 3%;
+  border-width: 1%;
+}
+
+#cancel {
+  position: absolute;
+  bottom: 187px;
+  right: 40px;
+  width: 20px;
+  height: 20px;
+  visibility: hidden;
+}
+#ok {
+  position: absolute;
+  bottom: 187px;
+  right: 15px;
+  width: 20px;
+  height: 20px;
+  visibility: hidden;
+}
+
+#img2 {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  border-radius: 3%;
+  -webkit-transform: rotate(180deg); /* Chrome, Safari, Opera */
+}
+#Xred {
+  position: absolute;
+  top: 500px;
+  left: 10px;
+  width: 91px;
+  height: 96px;
+  visibility:hidden;
+}
+
+#HelpButton {
+  position: absolute;
+  top: 35%;
+  left: 1%;
+  width: 91px;
+  height: 91px;
+}
+
+.talkbubble {
+   font-family: "Times New Roman", Times, serif;
+   width: 15%;
+   height: 10%;
+   background: white;
+   position: absolute;
+   border-style: solid;
+   border-width:1px;
+   -moz-border-radius:    10px;
+   -webkit-border-radius: 10px;
+   border-radius:         10px;
+}
+.talkbubble:before {
+   content:"";
+   position: absolute;
+   right: 100%;
+   top: 30px;
+   width: 0;
+   height: 0;
+   border-top: 13px solid transparent;
+   border-right: 26px solid white;
+   border-bottom: 13px solid transparent;
+}
+
+.inputs {
+  line-height: 5px;
+  position: absolute;
+  width: 225px;
+  height: 75px;
+  margin: 20px 0;
+  background: white;
+  border-radius: 50% / 10%;
+  color: black;
+  text-align: center;
+  text-indent: .1em;
+  z-index: 3;
+}
+.inputs:before {
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  right: -5%;
+  left: -5%;
+  background: inherit;
+  border-radius: 5% / 50%;
+}
+

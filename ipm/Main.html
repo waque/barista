@@ -1,0 +1,1476 @@
+\<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+<title>BARISTA</title>
+<meta charset = "utf-8">
+<link rel="stylesheet" href="style.css">
+
+<script type="text/javascript">
+
+var SCREEN_WIDTH = window.innerWidth
+|| document.documentElement.clientWidth
+|| document.body.clientWidth;
+
+var SCREEN_HEIGHT = window.innerHeight
+|| document.documentElement.clientHeight
+|| document.body.clientHeight;
+
+
+var xo;
+var yo;
+
+
+function startTime(){
+
+			var d=new Date();
+			var nmonth=d.getMonth(),ndate=d.getDate(),nyear=d.getYear();
+			if(nyear<1000) nyear+=1900;
+			var nhour=d.getHours(),nmin=d.getMinutes(),nsec=d.getSeconds();
+			if(nmin<=9) nmin="0"+nmin
+			if(nsec<=9) nsec="0"+nsec;
+			document.getElementById('time1').innerHTML=""+ndate+"/"+(nmonth+1)+"/"+nyear+" "+nhour+":"+nmin+"";
+			document.getElementById('time2').innerHTML=""+ndate+"/"+(nmonth+1)+"/"+nyear+" "+nhour+":"+nmin+"";
+			t=setTimeout('startTime()',500);
+		}
+		
+function remove(id) {
+    return (elem=document.getElementById(id)).parentNode.removeChild(elem);
+}
+
+var COMIDA="comidas";
+var BEBIDA="bebidas";
+var APERITIVO="aperitivos";
+
+var bebidas=[["cerveja", "cerveja.jpg","cerveja", 2],["vinho", "vinho.jpg","vinho", 3],["gin", "gin.jpg","gin", 5]];
+var comidas=[["hamburger", "hamburger.jpg", "hamburger", 5],["cachorro", "cachorro.jpg","cachorro", 3]];
+var aperitivos=[["amendoins", "amendoins.jpg", "amendoins", 1],["tremoços", "tremocos.jpg","tremocos", 1]];
+var drag_smallBall = true;
+var UserTotal = 0;
+
+
+var activeOrders=0;
+
+function createScroll(userID, t,l, type, userColour){
+	var products;
+	var tag=userID+type;
+	if(type==COMIDA){
+	    products=comidas;
+	}else if(type==BEBIDA){
+	    products=bebidas;
+	}else{//typee==APERITIVO
+	    products=aperitivos;
+	}
+	var OutDiv = document.createElement('div');
+	OutDiv.id = userID+'scroll';
+	OutDiv.className="scrollClass";
+	
+	OutDiv.style.top= t + 'px';
+	OutDiv.style.left= l - 209 + 'px';	
+	OutDiv.style.borderStyle="solid";
+	OutDiv.style.zIndex="2";
+				
+	document.body.appendChild(OutDiv);
+	
+	var i;
+	for (i = 0; i <products.length; i++) {
+		var img = document.createElement("IMG");
+		//var node = document.createTextNode(products[i]);
+		//node.id="product" + i;
+		img.id= tag+"Pedido"+i;
+		img.name=products[i][2];
+		img.className="scrollElement";
+		
+		var id = products[i][0];
+		var src = products[i][1];
+		var alt = products[i][2];
+		var custo = products[i][3];
+		
+
+	    img.setAttribute("src", src);
+	    img.setAttribute("alt", alt);
+	    document.body.appendChild(img);
+
+		//para.appendChild(node);
+		OutDiv.appendChild(img);
+		
+	}
+	
+	for (i = 0; i <products.length; i++) {
+		handle(userID, i,tag,userColour, products[i][3]);
+	}
+}
+
+function handle(userId, i,tag,userColour, cost){
+	document.getElementById(tag+"Pedido"+i).onmousedown=function(e){
+		var tipo=document.getElementById(tag + "Pedido"+i).name;
+		createProductBall(userId, tag+tipo+i+"_ball_"+activeOrders,tipo,"white",userColour,"black", SMALL_BALL_SIZE, SMALL_BALL_SIZE, e.pageY - SMALL_BALL_SIZE +"px", e.pageX - SMALL_BALL_SIZE+"px", cost);
+		activeOrders++;
+	}
+	
+	document.getElementById(tag+"Pedido"+i).onmouseover=function(e){
+		var user= document.getElementById(userId);
+		var x_axis=parseInt(user.style.left) + parseInt(user.width/2);
+		
+		createTalkBubble( (x_axis)/SCREEN_WIDTH * 100 + "%", (e.pageY-30)/SCREEN_HEIGHT *100 + "%", "Preço:" + cost + ".00€", "scroll"+i);
+		var talkBubclose = document.getElementById("talkbubbleclosemsg"  + "scroll"+i);
+		talkBubclose.parentNode.removeChild(talkBubclose);
+	}
+	
+	document.getElementById(tag+"Pedido"+i).onmouseleave=function(e){
+		var talkBub = document.getElementById("talkbubble" + "scroll"+i);
+		var talkBubmsg = document.getElementById("talkbubblemsg"  + "scroll"+i);
+		
+		talkBub.parentNode.removeChild(talkBub);
+		talkBubmsg.parentNode.removeChild(talkBubmsg);
+	}
+}
+
+var SMALL_BALL_SIZE=90;
+function createProductBall(userID, id,name,Colour1,Colour2,TextColour, wid, hei, cy,cx, cost){
+	drag_smallBall=true;
+	var c = document.createElement('canvas'), type = name;
+	c.id = id;
+	c.width= wid;
+    c.height= hei;
+	c.name=name;
+	c.ownerId= userID;
+	c.custo = cost;
+
+	document.body.appendChild(c);
+	
+	var ctx = c.getContext('2d');
+    
+    var focused = false;
+	
+	var menuA ; 
+	var menuB ;
+	var menuC ;
+	
+	var W =  wid;
+	var H = hei;
+	var Radius = hei/2;
+	//can delete order instantly
+	document.getElementById("Xred").style.visibility="visible";
+	
+	//css
+	c.style.position="absolute";
+	c.style.top=cy;
+	c.style.left=cx;
+	c.style.borderRadius="100%";
+	c.style.zIndex="3";
+
+	
+
+		c.addEventListener('mousedown', function(event) {
+			drag_smallBall=true;
+			
+			document.getElementById("Xred").style.visibility="visible";
+		}, false);
+		
+		c.addEventListener('mouseover',function(event) {
+			ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+			ctx.fillRect(0,0,hei,hei);
+	
+			}, false);
+			
+		c.addEventListener('mouseleave', function(event) {
+			paintCircle(id,name,Colour1,Colour2,TextColour,wid,hei);
+		}, false);
+		
+		c.addEventListener('mouseup', function(e) {
+			drag_smallBall= false;
+			
+			//intersecao com mesa;
+			var mesa= document.getElementById("Mesa");
+			if ( mesa.offsetLeft<(e.pageX) && (mesa.offsetLeft + mesa.width) > (e.pageX) &&
+			mesa.offsetTop<(e.pageY) && (mesa.offsetTop + mesa.height) > (e.pageY)  ){
+				
+				var inputForm = document.getElementById("inputOferecer");
+				var button = document.getElementById("oferecer");
+				var buttonCancel = document.getElementById("cancelar");
+				
+				inputForm.style.visibility="visible";
+				
+				var mesaDestino;
+				var lugarDestino;
+				buttonCancel.onclick= function (e){
+					inputForm.style.visibility="hidden";
+				}
+				
+				button.onclick = function(name){
+					mesaDestino= inputForm.elements["numeroMesa"].value;
+					lugarDestino= inputForm.elements["numeroLugar"].value;
+					inputForm.style.visibility="hidden";
+					
+					createTalkBubble("50%", "34%", "A fazer pedido para a mesa: "+mesaDestino+", lugar: " +lugarDestino + ".");
+					
+					c.style.display="none";
+					
+					mesa.style.borderColor="black";
+				}
+				
+			}
+			//intersecao com o X;
+			var Xred= document.getElementById("Xred");
+			
+			var pFrameStyle = window.getComputedStyle(Xred, null);
+			var w = parseInt(pFrameStyle.width,10);
+			var h = parseInt(pFrameStyle.height,10);
+
+			if ( Xred.offsetLeft<(e.pageX) && (Xred.offsetLeft + w) > (e.pageX) &&
+			Xred.offsetTop<(e.pageY) && (Xred.offsetTop + h) > (e.pageY)  ){
+				remove(c.id);
+				Xred.style.borderColor="black";
+			}
+			
+			//intersecao com qql espaço de consumo
+			for(i=0; i< UserTotal; i++){
+				var id = "User" + i ; 
+				var user = document.getElementById(id);
+				
+				if(!user){ continue;}
+				var rect = document.getElementById("consRect"+ "_" + user.id);
+				var scroll = document.getElementById("consRect"+ "_" + user.id+"scroll");
+				var w = 400;
+				var h = 100;
+				
+				if ( rect.offsetLeft<(e.pageX) && (rect.offsetLeft + w) > (e.pageX) &&
+					rect.offsetTop<(e.pageY) && (rect.offsetTop + h) > (e.pageY) && rect.style.visibility=="visible" ){
+
+
+						var img = document.createElement("IMG");
+						
+						img.className="horContainer";
+						img.setAttribute("src",c.name+".jpg");
+						scroll.appendChild(img);
+						
+						img.onclick= function(e){
+							var orderedList= document.getElementById("bagpopup"+ "_" +user.id + "scroll");
+							var newimg= document.createElement("IMG");
+							newimg.className="horContainer";
+							newimg.setAttribute("src", img.src)
+							orderedList.appendChild(newimg);
+							
+							img.parentNode.removeChild(img);
+							user.pedidosEspera--;
+						}
+						
+						var owner = document.getElementById(c.ownerId);
+						owner.saldo += c.custo;
+						
+						c.parentNode.removeChild(c);
+						user.pedidosEspera++;
+						createTalkBubble( (parseInt(rect.style.left) + 100)/SCREEN_WIDTH * 100 + "%", (parseInt(rect.style.top) - 100)/ SCREEN_HEIGHT * 100 + "%" , "A preparar o seu pedido.");
+
+				}
+			}
+			//hide xred
+			Xred.style.visibility="hidden"
+		}, false);
+			
+		c.addEventListener('mousemove', function(event) {
+			if(drag_smallBall){
+				
+				var c = document.getElementById(id);
+				var ctx = c.getContext("2d");
+				xo = event.pageX - (c.width/2);
+				yo = event.pageY - (c.height/2);
+				c.style.left =xo - (c.width/2)+'px';
+				c.style.top = yo -(c.height/2)+'px';
+				
+				var mesa= document.getElementById("Mesa");
+				if ( mesa.offsetLeft<(event.pageX - SMALL_BALL_SIZE/2) && (mesa.offsetLeft + mesa.width) > (event.pageX-SMALL_BALL_SIZE/2) &&
+					mesa.offsetTop<(event.pageY-SMALL_BALL_SIZE/2) && (mesa.offsetTop + mesa.height) > (event.pageY - SMALL_BALL_SIZE/2)  ){
+					
+					mesa.style.borderColor="red";
+				}else{
+					mesa.style.borderColor="black";
+				}
+				var Xred= document.getElementById("Xred");
+			
+				var pFrameStyle = window.getComputedStyle(Xred, null);
+				var w = parseInt(pFrameStyle.width,10);
+				var h = parseInt(pFrameStyle.height,10);
+				
+				//product ball inside consume smace for other table
+				if ( Xred.offsetLeft<(event.pageX) && (Xred.offsetLeft + w) > (event.pageX) &&
+					Xred.offsetTop<(event.pageY) && (Xred.offsetTop + h) > (event.pageY)  ){
+					Xred.style.borderColor="red";
+				}else{
+					Xred.style.borderColor="black";
+				}
+			}
+		}, false);
+
+		
+	paintCircle(id,name,Colour1,Colour2,TextColour, wid, hei);
+
+}
+function createElipse(id, wr, hr, offSet_Top, offset_Left, y1, menu_text, cy, cx){
+	var c = document.createElement('canvas');
+	c.id = id;
+	document.body.appendChild(c);
+	
+	c.style.position= "absolute";
+	c.style.border = "solid black ";
+	c.style.zIndex= 1;
+	c.style.borderRadius = '50%';
+	
+	
+	c.width= wr;
+	c.height= hr;
+	c.style.left = cx + offset_Left + 'px';
+	c.style.top = cy  + offSet_Top + 'px';
+	
+
+	ctx=c.getContext("2d");
+	ctx.rect(c.offsetLeft- (c.width/2) - 100, c.offsetTop+y1, wr, hr);
+	ctx.stroke();
+
+	var grd=ctx.createLinearGradient(0,0,wr,hr);
+	grd.addColorStop(0,"#808080");
+	grd.addColorStop(1,"#999999");
+
+	ctx.fillStyle=grd;
+	ctx.fillRect(0,0,wr,hr);
+	
+	ctx.font = "20px Comic Sans MS";
+	ctx.fillStyle = "#ffffff";
+	ctx.textAlign = "center";
+	ctx.fillText( menu_text, (c.width/2), (c.height/2));
+
+}
+
+function createBall(id,name,Colour1,Colour2,TextColour, wid, hei){
+	var c = document.createElement('canvas');
+	c.saldo = 0;
+	c.id = id;
+	c.width= wid;
+	c.height= hei;
+	c.name= name;
+	c.loggedIn=false;
+	c.hasChatOpen=false;
+	c.pedidosEspera=0;
+	if (id!="Mesa"){ //dinamic style for users
+		UserTotal= UserTotal+1;
+		c.style.position="absolute";
+		c.style.bottom="300px";
+		c.style.right="115px";
+		c.style.borderStyle="solid";
+		c.style.borderRadius="100px";
+		c.style.borderWidth="3px";
+		c.style.zIndex="2";
+	}
+	document.body.appendChild(c);
+	
+	var ctx = c.getContext('2d');
+	var drag = false;
+	var focused = false;
+	var bag = false;
+	
+	var menuA ; 
+	var menuB ;
+	var menuC ;
+	
+	var W =  wid;
+	var H = hei;
+	
+	var scrollWID = 200;
+	var scrollHEI = 400;
+	
+	if (id!="Mesa"){
+		c.loggedIn=false;
+		c.addEventListener('dblclick', function(event) {
+			menuA = false;
+			menuB = false;
+			menuC = false;
+			if (document.getElementById("consRect"+ "_" +id)){ // ja estao criados os elementos todos
+				
+				var rect = document.getElementById("consRect"+ "_" +id);
+				var menu1 = document.getElementById("consMenuA"+ "_" +id);
+				var menu2 = document.getElementById("consMenuB"+ "_" +id);
+				var menu3 = document.getElementById("consMenuC"+ "_" +id);
+				var bag = document.getElementById("bag" + "_" + id);
+				var chat=document.getElementById(id+"chat"); 
+				var bagpopup = document.getElementById("bagpopup"+ "_" +id);
+				var bagscroll = document.getElementById("bagpopup"+ "_" +id+"scroll");
+				var horScroll= document.getElementById("consRect_"+id+"scroll");
+				
+				if(focused==false){
+					rect.style.visibility="visible";
+					menu1.style.visibility="visible";
+					menu2.style.visibility="visible";
+					menu3.style.visibility="visible";
+					bag.style.visibility="visible";
+					chat.style.visibility="visible";
+					horScroll.style.visibility="visible";
+					if(c.loggedIn){
+						setChatVisibility(id, "visible");
+					}					
+					focused=true;
+				}
+				else{
+					rect.style.visibility='hidden';
+					menu1.style.visibility='hidden';
+					menu2.style.visibility='hidden';
+					menu3.style.visibility='hidden';
+					bag.style.visibility="hidden";
+					if(bagpopup){
+						bagpopup.style.visibility= "hidden";
+						bagscroll.style.visibility="hidden";
+					}
+					
+					horScroll.style.visibility="hidden";
+					
+					if(c.loggedIn){
+						setChatVisibility(id, "hidden");
+					}
+					if(document.getElementById(id+"scroll")){
+						scroll = document.getElementById(id+"scroll");
+						scroll.parentNode.removeChild(scroll);
+					}
+					chat.style.visibility="hidden";
+					
+					
+					//reset posicoes dos menus
+
+					menu2.style.left = c.offsetLeft - 100 + 'px';
+					menu2.style.top = c.offsetTop  - 10 + 'px';
+					
+					menu1.style.left = c.offsetLeft - 120 + 'px';
+					menu1.style.top = c.offsetTop  + 50 + 'px';
+					
+					menu3.style.left = c.offsetLeft - 100 + 'px';
+					menu3.style.top = c.offsetTop  + 110 + 'px';
+					
+					focused=false;
+					bag = false;
+				}
+			}
+			else{
+				//rect create
+				var c2 = document.createElement('canvas');
+				c2.id = "consRect"+ "_" +id;
+				document.body.appendChild(c2);
+		
+				c2.style.position= "absolute";
+				c2.style.border = "solid black ";
+				c2.style.visibility= "visible";
+				c2.style.zIndex= 1;
+			
+				var Wr2 = 400;
+				var Hr2 = c.height;
+		
+				c2.width= Wr2;
+				c2.height= Hr2*2/3;
+		
+				c2.style.left = c.offsetLeft + (c.width/2) + 'px';
+				c2.style.top = c.offsetTop  - 3 + Hr2/6 + 'px';
+		
+				ctx2=c2.getContext("2d");
+				ctx2.rect(xo,yo,Wr2,Hr2);
+				ctx2.stroke();
+		
+				var grd=ctx2.createLinearGradient(0,0,Wr2,Hr2);
+				grd.addColorStop(0,"#404040");
+				grd.addColorStop(1,"#f2f2f2");
+
+				ctx2.fillStyle=grd;
+				ctx2.fillRect(0,0,Wr2,Hr2);
+				
+				var OutDiv = document.createElement('div');
+				OutDiv.id = "consRect"+ "_" +id +'scroll';
+				OutDiv.className="scrollClass3";
+				OutDiv.style.left = c.offsetLeft + (c.width/2) + 'px';
+				OutDiv.style.top = c.offsetTop   + Hr2/6 + 'px';
+				OutDiv.style.zIndex="1";
+				document.body.appendChild(OutDiv);
+				
+				
+				//chat button
+				
+				var chat_width=parseInt(c2.style.left)+ Wr2+"px";
+				var chat_heigth=parseInt(c2.style.top) + c2.height+ 6+"px";
+				createChatButton(id, chat_width  ,  chat_heigth);
+				
+				//facebook button
+
+
+
+				//createmoney bag
+
+				var bag = document.createElement("canvas");
+				bag.id = "bag" + "_" + id;
+				document.body.appendChild(bag);
+
+				bag.style.position= "absolute";
+				bag.style.borderLeft = "solid"
+				bag.style.zIndex= 1;				
+				
+				var Wrb = 74;
+				var Hrb = Hr2*2/3;
+		
+				bag.width= Wrb;
+				bag.height= Hrb;
+				
+				bag.style.left = c.offsetLeft + (c.width/2) + Wr2 - 74 +  'px';
+				bag.style.top = c.offsetTop +25 + 'px';
+				
+				bag.addEventListener("click", function(event){
+						if(!document.getElementById("bagpopup"+ "_" +id)){
+							//create account pop up
+							var bagpopup = document.createElement('canvas');
+							bagpopup.id = "bagpopup"+ "_" +id;
+							document.body.appendChild(bagpopup);
+						
+							bagpopup.style.position= "absolute";
+							bagpopup.style.border = "solid black ";
+							bagpopup.style.zIndex= 1;
+			
+							var Wrbp = 400;
+							var Hrbp = 100;
+						
+							bagpopup.width =  Wrbp;
+							bagpopup.height = Hrbp;
+						
+							bagpopup.style.left = c.offsetLeft + (c.width/2) + Wr2 - 74 +  'px';
+							bagpopup.style.top = c.offsetTop - 100 + 'px';
+						
+							bpp2=bagpopup.getContext("2d");
+							bpp2.rect(xo,yo,Wrbp,Hrbp);
+							bpp2.stroke();
+		
+							var grd=bpp2.createLinearGradient(0,0,Wrbp,Hrbp);
+							grd.addColorStop(0,"#404040");
+							grd.addColorStop(1,"#f2f2f2");
+						
+							bpp2.fillStyle=grd;
+							bpp2.fillRect(0,0,Wrbp,Hrbp);
+								
+							var OutDiv = document.createElement('div');
+							OutDiv.id = "bagpopup"+ "_" +id +'scroll';
+							OutDiv.className="scrollClass2";
+	
+							OutDiv.style.top= c.offsetTop - 100 + 'px';
+							OutDiv.style.left= c.offsetLeft + (c.width/2) + Wr2 - 74 +  'px';	
+							OutDiv.style.borderStyle="solid";
+							OutDiv.style.zIndex="2";
+				
+							document.body.appendChild(OutDiv);
+						}
+						if(document.getElementById("bagpopup"+ "_" +id)){
+							var bagpopup = document.getElementById("bagpopup"+ "_" +id);
+							var bagscroll = document.getElementById("bagpopup"+ "_" +id+"scroll");
+							
+							if(!bag){
+								bagscroll.style.visibility="visible";
+								bagpopup.style.visibility="visible";
+								bag = true;
+							}
+							else{
+								bagscroll.style.visibility="hidden";
+								bagpopup.style.visibility="hidden";
+								bag = false;
+							}
+						}
+				}, false);
+		
+				ctxb=bag.getContext("2d");
+   
+    			var img = new Image();
+				img.src = 'saco.png';			
+				
+				var l = true;
+				img.onload = function(){
+					ctxb.drawImage(img, 0, 0);
+				}
+				//create MenuBebidas
+				var newId = "consMenuB"+ "_" +id;
+				createElipse(newId, 100, 50, -10, -100, 0, "Bebidas", c.offsetTop, c.offsetLeft);
+
+				var d1 = document.getElementById(newId);
+				
+				d1.addEventListener('click', function(event){
+					if(menuB){
+						//reset posicoes dos menus	
+						var menu1 = document.getElementById("consMenuA"+ "_" +id);
+						var menu2 = document.getElementById("consMenuB"+ "_" +id);
+						var menu3 = document.getElementById("consMenuC"+ "_" +id);
+			
+						
+						menu2.style.left = c.offsetLeft - 100 + 'px';
+						menu2.style.top = c.offsetTop  - 10 + 'px';
+					
+						menu1.style.left = c.offsetLeft - 120 + 'px';
+						menu1.style.top = c.offsetTop  + 50 + 'px';
+					
+						menu3.style.left = c.offsetLeft - 100 + 'px';
+						menu3.style.top = c.offsetTop  + 110 + 'px';
+						
+						menu1.style.visibility="visible";
+						menu2.style.visibility="visible";
+						menu3.style.visibility="visible";
+						
+						if(document.getElementById(id+"scroll")){
+							scroll = document.getElementById(id+"scroll");
+							scroll.parentNode.removeChild(scroll);
+						}
+						
+						menuB = false;
+					}
+					else{
+						menuB = true;
+						var menu1 = document.getElementById("consMenuA"+ "_" +id);
+						var menu3 = document.getElementById("consMenuC"+ "_" +id);
+						menu1.style.visibility='hidden';
+						menu3.style.visibility='hidden';
+						d1.style.left = 10 + c.offsetLeft + 'px';
+						d1.style.top = -70  + c.offsetTop + 'px';
+						
+						
+						// create scrool bar
+						createScroll(id, c.offsetTop, c.offsetLeft, BEBIDA, Colour2);
+					}
+				}, false);
+
+
+				//create MenuAperitivo
+				var newId = "consMenuA"+ "_" +id;
+				createElipse(newId, 100, 50, 50, -120, 70, "Aperitivos", c.offsetTop, c.offsetLeft);
+
+				var d2 = document.getElementById(newId);
+				d2.addEventListener('click', function(event){
+					if(menuA){
+						//reset posicoes dos menus	
+						var menu1 = document.getElementById("consMenuA"+ "_" +id);
+						var menu2 = document.getElementById("consMenuB"+ "_" +id);
+						var menu3 = document.getElementById("consMenuC"+ "_" +id);
+						
+						menu2.style.left = c.offsetLeft - 100 + 'px';
+						menu2.style.top = c.offsetTop  - 10 + 'px';
+					
+						menu1.style.left = c.offsetLeft - 120 + 'px';
+						menu1.style.top = c.offsetTop  + 50 + 'px';
+					
+						menu3.style.left = c.offsetLeft - 100 + 'px';
+						menu3.style.top = c.offsetTop  + 110 + 'px';
+						
+						menu1.style.visibility="visible";
+						menu2.style.visibility="visible";
+						menu3.style.visibility="visible";
+						
+						if(document.getElementById(id+"scroll")){
+							scroll = document.getElementById(id+"scroll");
+							scroll.parentNode.removeChild(scroll);
+						}
+						
+						menuA = false;
+					}
+					else{
+						menuA = true;
+						var menu2 = document.getElementById("consMenuB"+ "_" +id);
+						var menu3 = document.getElementById("consMenuC"+ "_" +id);
+						menu2.style.visibility='hidden';
+						menu3.style.visibility='hidden';
+						d2.style.left = 10 + c.offsetLeft + 'px';
+						d2.style.top = -70  + c.offsetTop + 'px';
+						
+
+						//scrooll						
+						createScroll(id,c.offsetTop, c.offsetLeft,APERITIVO,Colour2);
+					}
+				}, false);
+
+				//create MenuComida
+				var newId = "consMenuC"+ "_" +id;
+				createElipse(newId, 100, 50, 110, -100, 140, "Comida", c.offsetTop, c.offsetLeft);
+				var d3 = document.getElementById(newId);
+				d3.addEventListener('click', function(event){
+					if(menuC){
+						//reset posicoes dos menus	
+						var menu1 = document.getElementById("consMenuA"+ "_" +id);
+						var menu2 = document.getElementById("consMenuB"+ "_" +id);
+						var menu3 = document.getElementById("consMenuC"+ "_" +id);
+					
+						menu2.style.left = c.offsetLeft - 100 + 'px';
+						menu2.style.top = c.offsetTop  - 10 + 'px';
+					
+						menu1.style.left = c.offsetLeft - 120 + 'px';
+						menu1.style.top = c.offsetTop  + 50 + 'px';
+					
+						menu3.style.left = c.offsetLeft - 100 + 'px';
+						menu3.style.top = c.offsetTop  + 110 + 'px';
+						
+						menu1.style.visibility="visible";
+						menu2.style.visibility="visible";
+						menu3.style.visibility="visible";
+						
+						if(document.getElementById(id+"scroll")){
+							scroll = document.getElementById(id+"scroll");
+							scroll.parentNode.removeChild(scroll);
+						}
+						
+						menuC = false;
+					}
+					else{
+						menuC = true;
+						var menu1 = document.getElementById("consMenuA"+ "_" +id);
+						var menu2 = document.getElementById("consMenuB"+ "_" +id);
+						menu1.style.visibility='hidden';
+						menu2.style.visibility='hidden';
+						d3.style.left = 10 + c.offsetLeft + 'px';
+						d3.style.top = -70  + c.offsetTop + 'px';
+						
+						//scrooll						
+						createScroll(id,c.offsetTop, c.offsetLeft, COMIDA,Colour2);
+					}
+				}, false);
+				
+				focused=true;
+			}
+		},false);
+		
+		c.addEventListener('mousedown', function(event) {
+			document.getElementById("Xred").style.visibility="visible";
+			drag=true;
+		}, false);
+		
+		c.addEventListener('mouseover',function(event) {
+			ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+			ctx.fillRect(0,0,hei,hei);
+	
+			}, false);
+			
+		c.addEventListener('mouseleave', function(event) {
+			paintCircle(id,name,Colour1,Colour2,TextColour,wid,hei);
+		}, false);
+		
+		c.addEventListener('mouseup', function(e) {
+			drag= false;
+			var rect = document.getElementById("consRect"+ "_" +id);
+			var menu1 = document.getElementById("consMenuA"+ "_" +id);
+			var menu2 = document.getElementById("consMenuB"+ "_" +id);
+			var menu3 = document.getElementById("consMenuC"+ "_" +id);
+			var bag = document.getElementById("bag" + "_" + id);
+			var chat=document.getElementById(id+"chat"); 
+			var bagpopup = document.getElementById("bagpopup"+ "_" +id);
+			var bagscroll = document.getElementById("bagpopup"+ "_" +id+"scroll");
+			var Xred= document.getElementById("Xred");
+			var horScroll = document.getElementById("consRect_"+id+"scroll");
+			
+			var pFrameStyle = window.getComputedStyle(Xred, null);
+			var w = parseInt(pFrameStyle.width,10);
+			var h = parseInt(pFrameStyle.height,10);
+
+			//remove user from table
+			if ( Xred.offsetLeft<(e.pageX) && (Xred.offsetLeft + w) > (e.pageX) &&
+			Xred.offsetTop<(e.pageY) && (Xred.offsetTop + h) > (e.pageY)  ){
+				alert("conta: " +c.saldo+".00 €");
+				Xred.style.borderColor="black";
+				
+				if (rect){
+					rect.parentNode.removeChild(rect);
+					menu1.parentNode.removeChild(menu1);
+					menu2.parentNode.removeChild(menu2);
+					menu3.parentNode.removeChild(menu3);
+					bag.parentNode.removeChild(bag);
+					chat.parentNode.removeChild(chat);
+				
+				}
+				
+				if(bagpopup){
+					bagpopup.parentNode.removeChild(bagpopup);
+				}
+				if (bagscroll){
+					bagscroll.parentNode.removeChild(bagscroll);
+				}
+				if(horScroll){
+					horScroll.parentNode.removeChild(horScroll);
+				}
+				if(document.getElementById(id+"scroll")){
+					scroll = document.getElementById(id+"scroll");
+					scroll.parentNode.removeChild(scroll);
+				}
+				c.parentNode.removeChild(c);
+			}
+			
+			//hide xred
+			Xred.style.visibility="hidden"
+		}, false);
+			
+		c.addEventListener('mousemove', function(event) {
+			if(drag){
+				
+				var c = document.getElementById(id);
+				var ctx = c.getContext("2d");
+				xo = event.pageX - (c.width/2);
+				yo = event.pageY - (c.height/2);
+				c.style.left =xo - (c.width/4)+'px';
+				c.style.top = yo -(c.height/4)+'px';
+				
+				if (document.getElementById("consRect"+ "_" +id)){
+					var c2 = document.getElementById("consRect"+ "_" +id);
+					c2.style.left = c.offsetLeft + (c.width/2) + 'px';
+					c2.style.top = c.offsetTop  - 3 + c.height/6 + 'px';
+					
+					//update chat button in regard to rect element
+					updateChatButton(id, parseInt(c2.style.left)+c2.width + "px", parseInt(c2.style.top) + c2.height+ 6+"px");
+				}
+				if (document.getElementById("consMenuB"+ "_" +id)){
+					var c3 = document.getElementById("consMenuB"+ "_" +id);
+					if (menuB){
+						c3.style.left = 10 + c.offsetLeft + 'px';
+						c3.style.top = -70  + c.offsetTop + 'px';
+					}
+					else{
+						c3.style.left = c.offsetLeft - 100 + 'px';
+						c3.style.top = c.offsetTop  - 10 + 'px';
+					}
+				}
+				if (document.getElementById("consMenuA"+ "_" +id)){
+					var c4 = document.getElementById("consMenuA"+ "_" +id);
+					if (menuA){
+						c4.style.left = 10 + c.offsetLeft + 'px';
+						c4.style.top = -70  + c.offsetTop + 'px';
+					}
+					else{
+						c4.style.left = c.offsetLeft - 100 - 20 + 'px';
+						c4.style.top = c.offsetTop  +50 + 'px';
+					}
+				}
+				if (document.getElementById("consMenuC"+ "_" +id)){
+					var c5 = document.getElementById("consMenuC"+ "_" +id);
+					if (menuC){
+						c5.style.left = 10 + c.offsetLeft + 'px';
+						c5.style.top = -70  + c.offsetTop + 'px';
+					}
+					else{
+						c5.style.left = c.offsetLeft - 100 + 'px';
+						c5.style.top = c.offsetTop + 110 + 'px';
+					}
+				}
+				if (document.getElementById(id+"scroll")){
+					var c6 = document.getElementById(id+"scroll");
+					c6.style.top= c.offsetTop + 'px';
+					c6.style.left= c.offsetLeft - 209 + 'px';	
+				}
+				if (document.getElementById("bag" + "_" + id)){
+					var bag = document.getElementById("bag" + "_" + id);
+					bag.style.left = c.offsetLeft + (c.width/2) + 400 - 74 +  'px';
+					bag.style.top = c.offsetTop  + c.height/6+'px';
+				}
+				if (document.getElementById("bagpopup"+ "_" +id)){
+					var bagpopup = document.getElementById("bagpopup"+ "_" +id);
+					var bagscroll = document.getElementById("bagpopup"+ "_" +id+"scroll");
+					bagpopup.style.top= c.offsetTop - 100 + 'px';
+					bagpopup.style.left= c.offsetLeft + (c.width/2) + 400 - 74 +  'px';	
+					bagscroll.style.top= c.offsetTop - 100 + 'px';
+					bagscroll.style.left= c.offsetLeft + (c.width/2) + 400 - 74 +  'px';	
+				}
+				
+				if (document.getElementById("chat"+ id )){
+					updateChatPos(id);
+				}
+				
+				if(document.getElementById("consRect"+ "_" +id +'scroll')){
+					var horScroll=document.getElementById("consRect"+ "_" +id +'scroll');
+					
+					horScroll.style.left = c.offsetLeft + (c.width/2) + 'px';
+					horScroll.style.top = c.offsetTop   + c.height/6 + 'px';
+				}
+				
+			}
+		}, false);
+	
+	}
+
+	//Espaco de consumo
+	paintCircle(id,name,Colour1,Colour2,TextColour,wid,hei);
+}
+
+function paintCircle(id,name,Colour1,Colour2,TextColour,wid,hei){
+	var c = document.getElementById(id);
+	var ctx = c.getContext("2d");
+
+	ctx.beginPath();
+	ctx.arc((c.width/2),(c.height/2),c.width/2,0,2*Math.PI);
+	ctx.stroke();
+
+	// Create gradient
+	var grd = ctx.createRadialGradient((c.width/2),(c.width/2),5,c.width/2,(c.width/2),(c.width/2));
+	grd.addColorStop(0,Colour1);
+	grd.addColorStop(1,Colour2);
+
+	// Fill with gradient
+	ctx.fillStyle = grd;
+	ctx.fillRect(0,0,hei,hei);
+	
+	// Create text
+	ctx.font = "20px Comic Sans MS";
+	ctx.fillStyle = TextColour;
+	ctx.textAlign = "center";
+	ctx.fillText( name, (c.width/2), (c.width/2));
+}
+
+
+	function createTalkBubble(left, top, text, toAdd){
+		var bubble= document.createElement("div");
+		var msg= document.createElement("div");
+		var close= document.createElement("div");
+		
+		//style bubble
+		bubble.id="talkbubble" + toAdd;
+		bubble.className="talkbubble";
+		bubble.style.left= left;
+		bubble.style.top=top;
+		bubble.style.zIndex="3";
+		
+		//text comm
+		msg.id="talkbubblemsg" + toAdd;
+		msg.style.position="absolute";
+		msg.innerHTML=text;
+		msg.style.left=parseInt(left)+1+"%";
+		//TODO abstract text
+		msg.style.top=parseInt(top)+4+"%";
+		msg.style.zIndex="4";
+
+		//text comm
+		close.id="talkbubbleclosemsg" + toAdd;
+		close.style.position="absolute";
+		close.innerHTML= "(clique para fechar)";
+		close.style.left=parseInt(left)+3.5+"%";
+		//TODO abstract text
+		close.style.top=parseInt(top)+7+"%";
+		close.style.zIndex="4";
+		
+
+		document.body.appendChild(msg);
+		document.body.appendChild(bubble);
+		document.body.appendChild(close);
+		
+
+		bubble.addEventListener('click', function(event){
+			bubble.parentNode.removeChild(bubble);
+			msg.parentNode.removeChild(msg);
+			close.parentNode.removeChild(close);
+		},false);
+	}
+
+	//_____CHAT BUTTON__________
+	function createChatButton(id, x, y){
+
+		var user= document.getElementById(id);
+		var canvas=document.createElement("canvas");
+		var ctx=canvas.getContext("2d");
+		
+		//style
+		canvas.id=id+"chat";
+		canvas.style.position= "absolute";
+		canvas.style.borderLeft = "solid"
+		canvas.style.zIndex= 1;
+		canvas.alt= "chat";
+		canvas.style.left=parseInt(x)-79 + 6+"px";
+		canvas.style.top=parseInt(y)+"px";
+		canvas.style.borderLeft="none";
+		//img dimensions
+		canvas.width=79;
+		canvas.height=30;
+		document.body.appendChild(canvas);
+		
+		var img = new Image();
+		img.src="chat.png";
+		
+		img.onload = function(){
+			ctx.drawImage(img,0,0);
+		}
+
+		canvas.addEventListener("click", function(e){
+		
+			if( !document.getElementById(id).loggedIn ){ //not logged in
+				var input = document.createElement("form");
+				var br = document.createElement("br");
+				var br1 = document.createElement("br");
+				var user = document.createElement("input");
+				var password = document.createElement("input");
+				var okButton = document.createElement("input");
+				var cancelButton = document.createElement("input");
+				var userText = document.createTextNode("Username:");
+				var passText = document.createTextNode("Password:");
+				
+				//setting attributes and joining form together
+				user.setAttribute("type","text");
+				user.setAttribute("name","username");
+				
+				password.setAttribute("type", "password");
+				password.setAttribute("name", "password");
+				
+				cancelButton.setAttribute("type", "button");
+				cancelButton.setAttribute("value", "Cancelar");
+				cancelButton.onclick = function(){
+					input.parentNode.removeChild(input);
+			}
+
+
+				okButton.setAttribute("type", "button");
+				okButton.setAttribute("value", "Ok");
+					
+				input.appendChild(br1);
+				input.appendChild(userText);
+				input.appendChild(user);
+				input.appendChild(passText);
+				input.appendChild(password);
+				input.appendChild(br);
+				input.appendChild(cancelButton);
+				input.appendChild(okButton);
+
+
+				
+				input.className="inputs";
+				input.style.width="280px";
+
+				input.style.left=parseInt(canvas.style.left) - parseInt(canvas.width) + "px";
+				input.style.top=parseInt(canvas.style.top) - parseInt(canvas.height) + 4  + "px";
+
+				document.body.appendChild(input);
+				
+				//se for a primeira vez a clicar no chat
+				var client= document.getElementById(id);
+				if (client.username==null && client.username == null) {
+					okButton.setAttribute("value", "Registar");
+				}
+				
+				okButton.onclick = function(){
+					var client= document.getElementById(id);
+					
+					if (client.username==null && client.username == null){// se ainda nao tiver id e pass
+						client.username=user.value;//definir o nome de utilizador e password do client para o chat
+						client.password= password.value;
+						input.parentNode.removeChild(input);
+						
+						client.loggedIn=true;
+						displayChat(id);
+					}
+					else{
+						if(client.username == user.value && client.password== password.value) {
+							client.loggedIn=true;
+							input.parentNode.removeChild(input);
+							alert("autenticado com sucesso");
+							displayChat(id);
+						}else{
+							alert("Username ou password errada");
+						}
+					}
+					
+				}
+			}
+			else{
+				if (document.getElementById(id).hasChatOpen){
+					setChatVisibility(id, "hidden");
+				}else{
+					setChatVisibility(id, "visible");
+				}
+				document.getElementById(id).hasChatOpen= !document.getElementById(id).hasChatOpen; //negate boolean
+				
+			}
+		},false);
+		
+	}
+
+
+	function setChatVisibility(userid, type){
+		var chat = document.getElementById("chat"+userid);
+		var logout = document.getElementById(userid+"chatLogout");
+		var addFriend = document.getElementById(userid+"chatAddFriend");
+		var facebook = document.getElementById(userid+"facebook");
+		
+		chat.style.visibility=type;
+		logout.style.visibility=type;
+		addFriend.style.visibility=type;
+		facebook.style.visibility=type;
+		
+	}
+	function displayChat(userid){
+		var chat = document.createElement('div');
+		var user = document.getElementById(userid);
+		var rect = document.getElementById("consRect"+ "_" +userid);
+		var moneybag = document.getElementById("bag_" + userid);
+		
+		chat.className="scrollClass";
+		chat.style.width="8%";
+		chat.style.height="12%";
+		chat.style.left= parseInt(user.style.left) + parseInt(rect.width) + parseInt(moneybag.width)+ 10+ "px";
+		chat.style.top = rect.style.top;
+		chat.id="chat"+userid;
+		
+		document.body.appendChild(chat);
+
+
+		//________FACEBOOK________//
+
+		var fbcanvas=document.createElement("canvas");
+		var ctx69=fbcanvas.getContext("2d");
+		
+		//style
+		fbcanvas.id=userid+"facebook";
+		fbcanvas.style.position= "absolute";
+		fbcanvas.style.borderLeft = "solid";
+		fbcanvas.style.zIndex= 1;
+		fbcanvas.alt= "facebook";
+		fbcanvas.style.left=parseInt(chat.style.left)-30-80 +"px";
+		fbcanvas.style.top=parseInt(chat.style.top) + parseInt(rect.height)+5+"px";
+		fbcanvas.style.borderLeft="none";
+		//img dimensions
+		fbcanvas.width=30;
+		fbcanvas.height=30;
+		document.body.appendChild(fbcanvas);
+		
+		var img2 = new Image();
+		img2.src="facebook.png";
+		
+		img2.onload = function(){
+			ctx69.drawImage(img2,0,0);
+		}
+		
+		//botao do facebook
+		fbcanvas.onclick=function () {
+			//create fb input
+				var input = document.createElement("form");
+				var br = document.createElement("br");
+				var br1 = document.createElement("br");
+				var user = document.createElement("input");
+				var password = document.createElement("input");
+				var okButton = document.createElement("input");
+				var cancelButton = document.createElement("input");
+				var userText = document.createTextNode("Fb Username:");
+				var passText = document.createTextNode("Fb.Password:");
+				
+				//setting attributes and joining form together
+				user.setAttribute("type","text");
+				user.setAttribute("name","username");
+				
+				password.setAttribute("type", "password");
+				password.setAttribute("name", "password");
+				
+				cancelButton.setAttribute("type", "button");
+				cancelButton.setAttribute("value", "Cancelar");
+				cancelButton.onclick = function(){
+					input.parentNode.removeChild(input);
+				}
+
+
+				okButton.setAttribute("type", "button");
+				okButton.setAttribute("value", "Ok");
+					
+				input.appendChild(br1);
+				input.appendChild(userText);
+				input.appendChild(user);
+				input.appendChild(passText);
+				input.appendChild(password);
+				input.appendChild(br);
+				input.appendChild(cancelButton);
+				input.appendChild(okButton);
+
+				input.className="inputs";
+				input.style.width="265px";
+
+				input.style.left=parseInt(fbcanvas.style.left) - parseInt(fbcanvas.width) + "px";
+				input.style.top=parseInt(fbcanvas.style.top) - parseInt(fbcanvas.height) + 4  + "px";
+
+				document.body.appendChild(input);
+				
+				okButton.onclick= function(){
+					var chat= document.getElementById("chat"+userid);
+					
+					var nameToAdd = document.createElement("p"); 
+					var text= document.createTextNode("->   "+"Jonas");
+					
+					nameToAdd.appendChild(text);
+					chat.appendChild(nameToAdd);
+					
+					input.parentNode.removeChild(input);
+					
+					nameToAdd.onclick= function(){
+						alert("amigo convidado, quando ele chegar terá uma bebida grátis!!!!!!");
+						
+					}
+					
+				}
+				//todo implementar bebida grátis quando jonas chegar
+		}
+
+		//create addfriend button and logOut button
+		var logoutButton = document.createElement("button");
+		var t = document.createTextNode("Log Out");       // Create a text node
+		
+		logoutButton.id=userid+"chatLogout";
+		logoutButton.style.position="absolute";	
+		logoutButton.style.left= chat.style.left;
+		logoutButton.style.top= parseInt(chat.style.top) + parseInt(rect.height) + 7+ "px";
+		
+		logoutButton.onclick= function(){
+			user.loggedIn = false;
+			chat.parentNode.removeChild(chat);
+			logoutButton.parentNode.removeChild(logoutButton);
+			addFriendButton.parentNode.removeChild(addFriendButton);
+			fbcanvas.parentNode.removeChild(fbcanvas);
+		}
+		
+		logoutButton.appendChild(t);
+		document.body.appendChild(logoutButton);
+		
+		// addfriend on the table
+		var addFriendButton = document.createElement("button");
+		var t2= document.createTextNode("Add Friend");
+		
+		addFriendButton.id=userid+"chatAddFriend";
+		addFriendButton.style.position="absolute";	
+		addFriendButton.style.left= parseInt(chat.style.left)+ 60 + "px";
+		addFriendButton.style.top= parseInt(chat.style.top) + parseInt(rect.height) + 7+ "px";
+		
+		addFriendButton.appendChild(t2);
+		document.body.appendChild(addFriendButton);
+		
+		addFriendButton.onclick= function(){
+			var input = document.createElement("form");
+			var br = document.createElement("br");
+			var br1 = document.createElement("br");
+			var userFind = document.createElement("input");
+			var okButton = document.createElement("input");
+			var cancelButton = document.createElement("input");
+			var userText = document.createTextNode("Nome:");
+			var chatCanvas = document.getElementById(userid+"chat");
+			
+			//setting attributes and joining form together
+			userFind.setAttribute("type","text");
+			userFind.setAttribute("name","username");
+			
+			cancelButton.setAttribute("type", "button");
+			cancelButton.setAttribute("value", "Cancelar");
+			
+			
+			okButton.setAttribute("type", "button");
+			okButton.setAttribute("value", "Ok");
+				
+			input.appendChild(br1);
+			input.appendChild(userText);
+			input.appendChild(userFind);
+			input.appendChild(br);
+			input.appendChild(cancelButton);
+			input.appendChild(okButton);
+			
+			input.className="inputs";
+			input.style.width="250px";
+			input.style.height="50px";
+			input.style.left=parseInt(chatCanvas.style.left) - parseInt(chatCanvas.width) + "px";
+			input.style.top=parseInt(chatCanvas.style.top) - parseInt(chatCanvas.height) + 4  + "px";
+			document.body.appendChild(input);
+			
+			cancelButton.onclick = function(){
+				input.parentNode.removeChild(input);
+			}
+				
+			var name;
+			okButton.onclick = function(){
+				name= userFind.value;
+				input.parentNode.removeChild(input);
+				
+				// procura user
+				var bUserFound = false;
+				var userStr = "User";
+				var i=0;
+				var user = document.getElementById(userStr+i);
+				for(i=1; user!=null; i++){
+					if(name == user.name){
+						bUserFound = true
+						break;
+					}
+					user= document.getElementById(userStr+i);
+				}
+				if ( bUserFound == false){
+					alert("utilizador na mesa nao encontrado");
+				}else{
+					//add to scroll
+					var chatToAdd= document.getElementById("chat"+userid);
+					
+					var nameToAdd = document.createElement("p"); 
+					var text= document.createTextNode("->   "+name);
+					
+					nameToAdd.appendChild(text);
+					chat.appendChild(nameToAdd);
+					
+				}
+				
+			}	
+		}
+	}
+
+
+	function updateChatPos(userid){
+		var chat = document.getElementById("chat"+userid);
+		var user = document.getElementById(userid);
+		var rect = document.getElementById("consRect"+ "_" +userid);
+		var moneybag = document.getElementById("bag_" + userid);
+		var logoutButton = document.getElementById(userid+"chatLogout");
+		var addFriendButton = document.getElementById(userid+"chatAddFriend");
+		var fbcanvas= document.getElementById(userid+"facebook");
+
+		chat.style.left= parseInt(user.style.left) + parseInt(rect.width) + parseInt(moneybag.width)+ 10+ "px";
+		chat.style.top = rect.style.top;
+		//logout button postition
+		logoutButton.style.left= chat.style.left;
+		logoutButton.style.top= parseInt(chat.style.top) + parseInt(rect.height) + 7+ "px";
+		//addfriend
+		
+		addFriendButton.style.left= parseInt(chat.style.left)+ 60 + "px";
+		addFriendButton.style.top= parseInt(chat.style.top) + parseInt(rect.height) + 7+ "px";
+
+		fbcanvas.style.left=parseInt(chat.style.left)-30-80 +"px";
+		fbcanvas.style.top=parseInt(chat.style.top) + parseInt(rect.height)+5+"px";
+	}
+
+	function updateChatButton(id,x,y){
+		var chat= document.getElementById(id+"chat");
+		
+		chat.style.left=parseInt(x)-79+ 6+"px";
+		chat.style.top=parseInt(y)+"px";
+	}
+
+	</script> 
+
+</head>
+
+<body onload="startTime()" > 
+
+	
+	<script type="text/javascript">  
+		//createBall("Mesa","Espaço de Consumo", "#528DB5","#3C47DE","black",200,200);
+		var canvas=document.createElement("canvas");
+		var ctx=canvas.getContext("2d");
+		
+		//style
+		canvas.id="Mesa";
+		canvas.style.position= "absolute";
+		canvas.style.zIndex= 1;
+		canvas.alt= "Espaço Consumo";
+		canvas.style.left="45%";
+		canvas.style.top="45%";
+		canvas.style.borderStyle="solid";
+		canvas.style.borderWidth="1px";
+		canvas.style.borderRadius="100%";
+		//img dimensions
+		canvas.width=200;
+		canvas.height=200;
+		document.body.appendChild(canvas);
+		
+		var img = new Image();
+		img.src="Mesa.PNG";
+		
+		img.onload = function(){
+			ctx.drawImage(img,0,0);
+		}
+		
+    </script>
+	<script>
+
+
+	
+	function getRandomColour(){
+		return '#'+Math.random().toString(16).substr(-6);
+	}
+
+	function nameInput(){
+		var input = document.getElementById("inputForm");
+		
+		if (input==null){
+			var container = document.getElementById("container");
+			var textNode = document.createTextNode("Name: ");
+			container.appendChild(textNode);
+			var input = document.createElement("input");
+			input.type = "text";
+			input.id = "inputForm";
+			container.appendChild(input);
+			container.appendChild(document.createElement("br"));
+			document.getElementById("ok").style.visibility = "visible"; 
+			document.getElementById("cancel").style.visibility = "visible"; 
+		}  
+	}
+
+	function helpFunc(){
+			createTalkBubble("6%","33%","Um empregado virá à sua mesa.");
+	}
+
+	var i=0
+	function createUser(){
+		var  inputForm = document.getElementById("inputForm");
+		createBall("User"+i,inputForm.value,"white",getRandomColour(),"#000000",150,150);
+		i++;
+		cancelInput();
+	}
+
+	function cancelInput(){
+		var container = document.getElementById("container");
+
+		document.getElementById("ok").style.visibility = "hidden"; 
+		document.getElementById("cancel").style.visibility = "hidden";
+		
+		while (container.firstChild) {
+			container.removeChild(container.firstChild);
+		}
+	}
+	function mouseOverObject(id){
+		var obj= document.getElementById(id);
+		obj.style.opacity="0.85";
+	}
+	function mouseLeaveObject(id){
+		var obj= document.getElementById(id);
+		obj.style.opacity="1";
+	}
+	
+
+	</script>
+	
+	
+	<p id="time1" style="padding:1%;color:#000000;font:16pt Courier; font-weight:bold;"></p>
+	
+	<p id="time2" style="padding:1%;color:#000000;font:16pt Courier; font-weight:bold;"></p>
+
+	<form id = inputOferecer class= inputs name="inputForm">
+		.<br>
+		Mesa :
+		<input type="number" name="numeroMesa" size="2"> <br>
+		Lugar :
+		<input type="number" name="numeroLugar" size="2">
+		<br>
+		<input id= cancelar type="button" value="Cancelar"><input id= oferecer type="button" value="Pedir" >
+	</form>
+	
+	<div id = img1 onclick="nameInput()" onmouseover="mouseOverObject(id)" onmouseleave="mouseLeaveObject(id)">
+		<img src="clientinho.png" alt="Add Client1";>
+	</div>
+	<div id = img2 onmouseover="mouseOverObject(id)" onmouseleave="mouseLeaveObject(id)">
+		<img src="clientinho.png" alt="Add Client2";>
+	</div>
+	
+	<div id = Xred onmouseover="mouseOverObject(id)" onmouseleave="mouseLeaveObject(id)">
+		<img src="Xred.png" alt="Xred";>
+	</div>
+
+	<div id = HelpButton onclick="helpFunc()" >
+		<img src="helpbutton.png" alt="HelpButton";>
+	</div>
+	
+	<div id = ok onclick="createUser()" >
+		<img src="ok.png" alt="ok" ;>
+	</div>
+	<div id = cancel onclick="cancelInput()">
+		<img src="cancel.png" alt="cancel";>
+	</div>
+	
+	<div id = "container"></div>
+ 
+	
+	
+</body>
+
+</html>
